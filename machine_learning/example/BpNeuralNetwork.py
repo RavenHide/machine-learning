@@ -1,8 +1,7 @@
 import numpy as np
 import copy
 import pandas as pd
-from machine_learning import bpnnUtil
-from sklearn import datasets
+from machine_learning.example import bpnnUtil
 
 
 class BpNN(object):
@@ -28,19 +27,32 @@ class BpNN(object):
             self.parameters_ = bpnnUtil.xavier_initializer(layer_dims_, self.seed)
         elif self.initializer == 'xavier':
             self.parameters_ = bpnnUtil.xavier_initializer(layer_dims_, self.seed)
+        else:
+            raise ValueError('不支持的: initializer')
 
         assert self.optimizer in ('gd', 'sgd', 'adam', 'momentum')
         if self.optimizer == 'gd':
-            parameters_, costs = self.optimizer_gd(X_, y_, self.parameters_, num_epochs, self.learning_rate)
+            parameters_, costs = self.optimizer_gd(
+                X_, y_, self.parameters_, num_epochs, self.learning_rate
+            )
         elif self.optimizer == 'sgd':
-            parameters_, costs = self.optimizer_sgd(X_, y_, self.parameters_, num_epochs, self.learning_rate, self.seed)
+            parameters_, costs = self.optimizer_sgd(
+                X_, y_, self.parameters_, num_epochs, self.learning_rate,
+                self.seed
+            )
         elif self.optimizer == 'momentum':
-            parameters_, costs = self.optimizer_sgd_monment(X_, y_, self.parameters_, beta=0.9, num_epochs=num_epochs,
-                                                            learning_rate=self.learning_rate, seed=self.seed)
+            parameters_, costs = self.optimizer_sgd_monment(
+                X_, y_, self.parameters_, beta=0.9, num_epochs=num_epochs,
+                learning_rate=self.learning_rate, seed=self.seed
+            )
         elif self.optimizer == 'adam':
-            parameters_, costs = self.optimizer_sgd_adam(X_, y_, self.parameters_, beta1=0.9, beta2=0.999, epsilon=1e-7,
-                                                         num_epochs=num_epochs, learning_rate=self.learning_rate,
-                                                         seed=self.seed)
+            parameters_, costs = self.optimizer_sgd_adam(
+                X_, y_, self.parameters_, beta1=0.9, beta2=0.999, epsilon=1e-7,
+                num_epochs=num_epochs, learning_rate=self.learning_rate,
+                seed=self.seed
+            )
+        else:
+            raise ValueError('不支持的 optimizer')
 
         self.parameters_ = parameters_
         self.costs = costs
@@ -149,7 +161,7 @@ class BpNN(object):
 
         w_last = parameters_['W' + str(L_)]
         b_last = parameters_['b' + str(L_)]
-
+        print(w_last.shape)
         if w_last.shape[0] == 1:
             a_last, cache_ = self.forward_one_layer(a_, w_last, b_last, 'sigmoid')
         else:
@@ -160,6 +172,7 @@ class BpNN(object):
 
     def optimizer_gd(self, X_, y_, parameters_, num_epochs, learning_rate):
         costs = []
+
         for i in range(num_epochs):
             a_last, caches = self.forward_L_layer(X_, parameters_)
             grads = self.backward_L_layer(a_last, y_, caches)
@@ -272,10 +285,10 @@ if __name__ == '__main__':
     bp = BpNN([3, 1], learning_rate=0.1, optimizer='gd')
     bp.fit(X_test.values, y_test.values, num_epochs=200)
 
-    bp1 = BpNN([3, 1], learning_rate=0.1, optimizer='sgd')
-    bp1.fit(X_test.values, y_test.values, num_epochs=200)
-
-    bpnnUtil.plot_costs([bp.costs, bp1.costs], ['gd_cost', 'sgd_cost'])
+    # bp1 = BpNN([3, 1], learning_rate=0.1, optimizer='sgd')
+    # bp1.fit(X_test.values, y_test.values, num_epochs=200)
+    #
+    # bpnnUtil.plot_costs([bp.costs, bp1.costs], ['gd_cost', 'sgd_cost'])
 
     # 5.6
     # iris = datasets.load_iris()
