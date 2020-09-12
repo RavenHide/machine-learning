@@ -10,6 +10,7 @@
     :date created: 2020-09-10
     :python version: 3.5
 """
+from pprint import pprint
 
 import pandas as pd
 import numpy as np
@@ -27,8 +28,11 @@ def params_init_with_xavier(layer_dims, seed=16):
     network_params_list = list()
 
     for i in range(len(layer_dims) - 1):
-        weight_matrix = np.random.randn(layer_dims[i], layer_dims[i + 1])
-        weight_matrix = weight_matrix * np.sqrt(1 / layer_dims[i])
+        a = np.sqrt(6 / (layer_dims[i] + layer_dims[i + 1]))
+        # weight_matrix = np.random.randn(layer_dims[i], layer_dims[i + 1])
+        weight_matrix = np.random.uniform(
+            -a, a, (layer_dims[i], layer_dims[i+1])
+        )
         threshold_matrix = np.zeros((layer_dims[i + 1], 1))
 
         network_params_list.append(
@@ -58,11 +62,16 @@ if __name__ == '__main__':
     network_params_list.extend(params_init_with_xavier(layer_dims))
 
     learning_rate = 0.01
-    max_loop = 10000
+    max_loop = 100000
     loss_list = list()
-    for _ in range(max_loop):
 
+    train_times = 0
+    for _ in range(max_loop):
+        train_times += 1
+        print('第%s次训练: ' % train_times)
+        loss_sum = 0
         for i, x in data.iterrows():
+
             # 1 x l
             y = x.pop('好瓜').reshape(-1, 1)
 
@@ -72,11 +81,14 @@ if __name__ == '__main__':
 
             # 1 x d
             y_hat = x_matrix
+
             for i, params_item in enumerate(network_params_list):
                 weight_matrix = params_item['w']
 
-                input = np.dot(y_hat, weight_matrix)
-                activation_x = input - params_item['t'].T
+                input_vector = np.dot(y_hat, weight_matrix)
+
+                activation_x = input_vector - params_item['t'].T
+
                 y_hat = 1 / (1 + np.exp(-activation_x))
 
                 if i < len(network_params_list) - 1:
@@ -84,21 +96,21 @@ if __name__ == '__main__':
 
             # 计算损失函数
             # 交叉熵损失函数计算loss
+            # l x 1
             y_hat_vector = y_hat.T
 
             loss = -1 * (
-                np.dot(y, np.log(y_hat_vector)) +
-                np.dot((1 - y), np.log(1 - y_hat_vector))
+                np.dot(y, np.log2(y_hat_vector)) +
+                np.dot((1 - y), np.log2(1 - y_hat_vector))
             ) / y_hat_vector.shape[0]
-
-            loss_list.extend(np.array(loss.flat))
+            loss_sum += np.squeeze(loss.getA())
 
             # 计算输出层神经元的梯度项
             # d, q, l, 各层神经元的总数
 
             # l x 1 矩阵
             g_vector = np.dot(
-                np.diag(np.diag(np.dot(y_hat.T, (1 - y_hat))).flat),
+                np.diag(np.dot(np.diag(y_hat_vector.flat), 1 - y_hat).flat),
                 (y - y_hat).T
             )
 
@@ -113,6 +125,7 @@ if __name__ == '__main__':
 
             # 开始更新神经网络参数
             delta_W_1_matrix = learning_rate * np.dot(b_vector.T, g_vector.T)
+
             network_params_list[1]['w'] += delta_W_1_matrix
             delta_T_1_matrix = -1 * learning_rate * g_vector
 
@@ -121,23 +134,14 @@ if __name__ == '__main__':
             delta_W_0_matrix = learning_rate * np.dot(
                 x_matrix.T, e_vector.T
             )
+
             network_params_list[0]['w'] += delta_W_0_matrix
 
             delta_T_0_matrix = -1 * learning_rate * e_vector
             network_params_list[0]['t'] += delta_T_0_matrix
 
-            # 计算隐层神经元的梯度项
-            # e =
-
-
-            # for j in range(len(network_params_list) -1, -1, -1):
-            #     delta_w = learning_rate * g
-
-
-            # print(g)
-
-            #
-            # 向后传播，调整network_params
+        avg_loss = loss_sum / len(data)
+        loss_list.append(avg_loss)
 
     plt.plot(loss_list)
     plt.show()
