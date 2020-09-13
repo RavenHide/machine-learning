@@ -1,17 +1,10 @@
 click==6.7
-Flask==0.11.1
-Flask-Limiter==1.0.1
-Flask-Login==0.3.2
-gevent==20.6.1
+
+
 limits==1.3
 pymongo==3.2.2
 redis==3.5.3
 requests==2.14.2
-urllib3==1.21.1
-Werkzeug==0.11.10
-Flask-Sockets==0.2.1
-websockets==8.1
-tornado==6.0.4
 
 # 机器学习
 numpy==1.19.1
